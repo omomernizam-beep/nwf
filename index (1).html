@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NWF</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#f0f0f0;font-family:system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px}
+h1{font-size:42px;font-weight:800;letter-spacing:-2px;color:#fff;margin-bottom:6px}
+h1 span{color:#00d4ff}
+.sub{color:#444;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:2px}
+.dot.on{background:#00ff88;animation:p 2s infinite}
+.dot.off{background:#ff4d6d}
+.dot.wait{background:#ffaa00;animation:p 2s infinite}
+@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.5)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
+.peers{font-size:12px;color:#333;margin-bottom:28px}
+.box{width:100%;max-width:480px;background:#161616;border:1px solid #222;border-radius:16px;overflow:hidden}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #222}
+.tab{padding:14px;text-align:center;font-size:14px;color:#555;cursor:pointer;transition:.15s}
+.tab:hover{color:#fff}
+.tab.on{color:#00d4ff;border-bottom:2px solid #00d4ff;background:rgba(0,212,255,.04)}
+.pane{display:none;padding:20px}
+.pane.on{display:block}
+textarea{width:100%;height:100px;background:#0d0d0d;border:1px solid #222;border-radius:8px;color:#f0f0f0;font-size:14px;padding:12px;resize:none;outline:none;font-family:inherit;transition:border .15s}
+textarea:focus{border-color:#00d4ff}
+textarea::placeholder{color:#333}
+button.main-btn{width:100%;margin-top:10px;padding:13px;background:#00d4ff;color:#000;font-size:15px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:.15s}
+button.main-btn:hover{background:#33ddff}
+button.main-btn:disabled{background:#1a1a1a;color:#444;cursor:not-allowed}
+.drop{border:2px dashed #222;border-radius:10px;padding:40px 20px;text-align:center;cursor:pointer;transition:.2s;background:#0d0d0d}
+.drop:hover,.drop.over{border-color:#00d4ff;background:rgba(0,212,255,.03)}
+.drop-icon{font-size:30px;margin-bottom:8px}
+.drop-t{font-size:14px;font-weight:600;margin-bottom:4px}
+.drop-s{font-size:12px;color:#444}
+input[type=file]{display:none}
+.queue{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.qi{display:flex;align-items:center;gap:10px;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:7px;padding:9px 11px}
+.qe{width:30px;height:30px;border-radius:5px;background:rgba(0,212,255,.1);color:#00d4ff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qn{font-size:12px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qs{font-size:11px;color:#444}
+.qx{color:#333;cursor:pointer;font-size:15px;padding:3px;transition:.15s;flex-shrink:0}
+.qx:hover{color:#ff4d6d}
+.divider{height:1px;background:#1a1a1a;margin:0 20px}
+.feed-wrap{padding:16px 20px 20px}
+.feed-label{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#333;margin-bottom:10px}
+.feed{display:flex;flex-direction:column;gap:7px}
+.fi{display:flex;align-items:flex-start;gap:9px;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:8px;padding:11px 12px;animation:up .25s ease}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;margin-top:2px}
+.bt{background:rgba(0,212,255,.1);color:#00d4ff}
+.bf{background:rgba(0,255,136,.1);color:#00ff88}
+.br{background:rgba(255,170,0,.1);color:#ffaa00}
+.fc{flex:1;min-width:0}
+.ft{font-size:13px;color:#ccc;line-height:1.5;word-break:break-word}
+.fm{font-size:10px;color:#333;margin-top:3px}
+.ab{font-size:11px;font-weight:600;padding:3px 9px;border:1px solid;border-radius:5px;cursor:pointer;margin-top:2px;background:none;width:auto;font-family:inherit;transition:.15s;flex-shrink:0}
+.ab.cp{color:#00d4ff;border-color:rgba(0,212,255,.2)}
+.ab.cp:hover{background:rgba(0,212,255,.1)}
+.ab.dl{color:#00ff88;border-color:rgba(0,255,136,.2)}
+.ab.dl:hover{background:rgba(0,255,136,.1)}
+.empty{text-align:center;color:#333;font-size:13px;padding:14px 0}
+.progress{height:3px;background:#1a1a1a;border-radius:2px;margin-top:6px;overflow:hidden}
+.progress-bar{height:100%;background:#00d4ff;border-radius:2px;transition:width .1s}
+.from-badge{font-size:10px;color:#555;margin-left:4px}
+</style>
+</head>
+<body>
+
+<h1>N<span>W</span>F</h1>
+<p class="sub"><span class="dot wait" id="statusDot"></span><span id="statusText">Connecting…</span></p>
+<p class="peers" id="peersText"></p>
+
+<div class="box">
+  <div class="tabs">
+    <div class="tab on" onclick="switchTab('text',this)">📝 Text</div>
+    <div class="tab" onclick="switchTab('file',this)">📁 File</div>
+  </div>
+
+  <div class="pane on" id="p-text">
+    <textarea id="txt" placeholder="Type a note, paste a link, share anything…"></textarea>
+    <button class="main-btn" id="sendTextBtn" onclick="sendText()">Share to All Devices</button>
+  </div>
+
+  <div class="pane" id="p-file">
+    <div class="drop" id="drop" onclick="document.getElementById('fi').click()" ondragover="dov(event)" ondragleave="dol()" ondrop="dop(event)">
+      <div class="drop-icon">📂</div>
+      <div class="drop-t">Drop files here</div>
+      <div class="drop-s">or click to browse — any file type</div>
+    </div>
+    <input type="file" id="fi" multiple onchange="fic(event)">
+    <div class="queue" id="queue"></div>
+    <button class="main-btn" id="sbtn" style="display:none" onclick="sendFiles()">Share Files to All Devices</button>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="feed-wrap">
+    <div class="feed-label">Shared this session</div>
+    <div class="feed" id="feed"><div class="empty" id="emp">Nothing shared yet.</div></div>
+  </div>
+</div>
+
+<script>
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(n, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('p-' + n).classList.add('on');
+}
+
+// ─── File staging ─────────────────────────────────────────────────────────────
+let staged = [], blobStore = {};
+
+function dov(e) { e.preventDefault(); document.getElementById('drop').classList.add('over'); }
+function dol()  { document.getElementById('drop').classList.remove('over'); }
+function dop(e) { e.preventDefault(); dol(); [...e.dataTransfer.files].forEach(addFile); }
+function fic(e) { [...e.target.files].forEach(addFile); e.target.value = ''; }
+function addFile(f) { staged.push(f); renderQueue(); }
+function remFile(i) { staged.splice(i, 1); renderQueue(); }
+
+function renderQueue() {
+  document.getElementById('sbtn').style.display = staged.length ? 'block' : 'none';
+  document.getElementById('queue').innerHTML = staged.map((f, i) => {
+    const ext = f.name.split('.').pop().toUpperCase().slice(0, 4) || 'FILE';
+    const sz  = f.size > 1e6 ? (f.size/1e6).toFixed(1)+' MB'
+              : f.size > 1e3 ? (f.size/1e3).toFixed(0)+' KB' : f.size+' B';
+    return `<div class="qi">
+      <div class="qe">${ext}</div>
+      <div class="fc"><div class="qn">${f.name}</div><div class="qs">${sz}</div></div>
+      <div class="qx" onclick="remFile(${i})">✕</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Feed helpers ─────────────────────────────────────────────────────────────
+function pushFeed(type, content, extra = {}) {
+  document.getElementById('emp')?.remove();
+  const t   = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const src = extra.fromSelf ? '' : `<span class="from-badge">↙ received</span>`;
+  const d   = document.createElement('div');
+  d.className = 'fi';
+
+  if (type === 'text') {
+    const lnk  = /^https?:\/\//i.test(content);
+    const disp = lnk
+      ? `<a href="${content}" target="_blank" style="color:#00d4ff">${esc(content)}</a>`
+      : esc(content);
+    d.innerHTML = `<span class="badge bt">TEXT</span>
+      <div class="fc"><div class="ft">${disp}</div><div class="fm">${t}${src}</div></div>
+      <button class="ab cp" onclick="cp(this,'${ea(content)}')">Copy</button>`;
+
+  } else if (type === 'file') {
+    const id = extra.blobId;
+    d.innerHTML = `<span class="badge bf">FILE</span>
+      <div class="fc">
+        <div class="ft" style="font-weight:600">${esc(content)}</div>
+        <div class="fm">${t}${src}</div>
+        ${id ? `<div class="progress"><div class="progress-bar" id="pb-${id}" style="width:0%"></div></div>` : ''}
+      </div>
+      ${id ? `<button class="ab dl" id="dlbtn-${id}" onclick="dlBlob('${id}')" style="display:none">⬇ Save</button>` : ''}`;
+    if (id) d.id = 'fi-' + id;
+
+  } else if (type === 'info') {
+    d.innerHTML = `<span class="badge br">INFO</span>
+      <div class="fc"><div class="ft" style="color:#888">${esc(content)}</div><div class="fm">${t}</div></div>`;
+  }
+
+  const feed = document.getElementById('feed');
+  feed.insertBefore(d, feed.firstChild);
+}
+
+function dlBlob(id) {
+  const blob = blobStore[id];
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href = url; a.download = blob.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function cp(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!'; btn.style.color = '#00ff88';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 1500);
+  });
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ea(s)  { return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ─── Send actions ─────────────────────────────────────────────────────────────
+function sendText() {
+  const v = document.getElementById('txt').value.trim();
+  if (!v) {
+    document.getElementById('txt').style.borderColor = '#ff4d6d';
+    setTimeout(() => document.getElementById('txt').style.borderColor = '', 700);
+    return;
+  }
+  pushFeed('text', v, { fromSelf: true });
+  ws.send(JSON.stringify({ type: 'text', content: v }));
+  document.getElementById('txt').value = '';
+}
+
+const CHUNK = 64 * 1024; // 64 KB chunks
+
+function sendFiles() {
+  if (!staged.length) return;
+  staged.forEach(file => sendOneFile(file));
+  staged = []; renderQueue();
+}
+
+function sendOneFile(file) {
+  const transferId = 'tx' + Date.now() + Math.random().toString(36).slice(2);
+  const totalChunks = Math.ceil(file.size / CHUNK);
+
+  ws.send(JSON.stringify({
+    type: 'file_meta',
+    transferId, name: file.name, size: file.size,
+    mime: file.type || 'application/octet-stream', totalChunks
+  }));
+
+  pushFeed('file', file.name, { fromSelf: true, blobId: transferId });
+
+  let idx = 0;
+  function sendNext() {
+    if (idx >= totalChunks) {
+      ws.send(JSON.stringify({ type: 'file_done', transferId }));
+      const pb = document.getElementById('pb-' + transferId);
+      if (pb) pb.style.width = '100%';
+      const btn = document.getElementById('dlbtn-' + transferId);
+      if (btn) { btn.style.display = 'block'; }
+      blobStore[transferId] = new Blob([file], { type: file.type });
+      blobStore[transferId].name = file.name;
+      return;
+    }
+    const slice = file.slice(idx * CHUNK, (idx + 1) * CHUNK);
+    const reader = new FileReader();
+    reader.onload = () => {
+      ws.send(JSON.stringify({
+        type: 'file_chunk',
+        transferId, index: idx,
+        data: reader.result.split(',')[1] // base64
+      }));
+      const pb = document.getElementById('pb-' + transferId);
+      if (pb) pb.style.width = (((idx + 1) / totalChunks) * 100) + '%';
+      idx++;
+      sendNext();
+    };
+    reader.readAsDataURL(slice);
+  }
+  sendNext();
+}
+
+// ─── WebSocket ────────────────────────────────────────────────────────────────
+const transfers = {}; // incoming file reassembly  { transferId → { meta, chunks[] } }
+let ws, reconnectTimer;
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}`);
+
+  ws.onopen = () => {
+    clearTimeout(reconnectTimer);
+    setStatus('on', 'Connected');
+  };
+
+  ws.onclose = () => {
+    setStatus('off', 'Disconnected — retrying…');
+    document.getElementById('peersText').textContent = '';
+    reconnectTimer = setTimeout(connect, 2500);
+  };
+
+  ws.onerror = () => ws.close();
+
+  ws.onmessage = ({ data }) => {
+    let msg;
+    try { msg = JSON.parse(data); } catch { return; }
+
+    switch (msg.type) {
+      case 'welcome':
+        setStatus('on', 'Connected');
+        updatePeers(msg.peers);
+        break;
+
+      case 'peer_joined':
+      case 'peer_left':
+        updatePeers(msg.peers);
+        break;
+
+      case 'text':
+        pushFeed('text', msg.content, { fromSelf: false });
+        break;
+
+      case 'file_meta': {
+        transfers[msg.transferId] = { meta: msg, chunks: [] };
+        pushFeed('file', msg.name, { fromSelf: false, blobId: msg.transferId });
+        break;
+      }
+
+      case 'file_chunk': {
+        const tx = transfers[msg.transferId];
+        if (!tx) break;
+        tx.chunks[msg.index] = msg.data;
+        const pct = ((tx.chunks.filter(Boolean).length / tx.meta.totalChunks) * 100).toFixed(0);
+        const pb  = document.getElementById('pb-' + msg.transferId);
+        if (pb) pb.style.width = pct + '%';
+        break;
+      }
+
+      case 'file_done': {
+        const tx = transfers[msg.transferId];
+        if (!tx) break;
+        // Reassemble base64 chunks → Blob
+        const binary = tx.chunks.map(b64 => {
+          const bin = atob(b64);
+          const buf = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+          return buf;
+        });
+        const blob = new Blob(binary, { type: tx.meta.mime });
+        blob.name = tx.meta.name;
+        blobStore[msg.transferId] = blob;
+        delete transfers[msg.transferId];
+
+        const pb = document.getElementById('pb-' + msg.transferId);
+        if (pb) pb.style.width = '100%';
+        const btn = document.getElementById('dlbtn-' + msg.transferId);
+        if (btn) btn.style.display = 'block';
+        break;
+      }
+
+      case 'pong':
+        break;
+    }
+  };
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'dot ' + state;
+  document.getElementById('statusText').textContent = text;
+}
+
+function updatePeers(count) {
+  document.getElementById('peersText').textContent =
+    count === 0 ? 'No other devices on the network yet'
+    : count === 1 ? '1 other device connected'
+    : `${count} other devices connected`;
+}
+
+connect();
+
+// Keep-alive ping every 25 s
+setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'ping' })); }, 25000);
+</script>
+</body>
+</html>
