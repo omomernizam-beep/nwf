@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NWF</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: #0A0F1E;
+    color: #E8F4F8;
+    font-family: 'Space Grotesk', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .logo {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #00D4FF;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 9px; height: 9px;
+    background: #00FF88;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.5); }
+    50% { box-shadow: 0 0 0 7px rgba(0,255,136,0); }
+  }
+  .tagline {
+    font-size: 13px;
+    color: #5A7090;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .device-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,212,255,0.07);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #00D4FF;
+    margin-bottom: 20px;
+  }
+  .dp-dot { width: 6px; height: 6px; background: #00FF88; border-radius: 50%; animation: pulse 1.5s infinite; }
+
+  .card {
+    width: 100%;
+    max-width: 500px;
+    background: #131B2E;
+    border: 1px solid #1E2A3A;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #1E2A3A;
+  }
+  .tab {
+    padding: 14px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5A7090;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tab:hover { color: #E8F4F8; }
+  .tab.active {
+    color: #00D4FF;
+    border-bottom: 2px solid #00D4FF;
+    background: rgba(0,212,255,0.04);
+  }
+
+  .pane { display: none; padding: 20px; }
+  .pane.active { display: block; }
+
+  textarea {
+    width: 100%;
+    height: 110px;
+    background: #0A0F1E;
+    border: 1px solid #1E2A3A;
+    border-radius: 10px;
+    color: #E8F4F8;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    padding: 12px 14px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+  }
+  textarea:focus { border-color: #00D4FF; }
+  textarea::placeholder { color: #3A4F6A; }
+
+  .send-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 13px;
+    background: #00D4FF;
+    color: #0A0F1E;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .send-btn:hover { background: #33DDFF; }
+
+  .drop-zone {
+    border: 2px dashed #1E2A3A;
+    border-radius: 12px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #0A0F1E;
+  }
+  .drop-zone:hover, .drop-zone.over {
+    border-color: #00D4FF;
+    background: rgba(0,212,255,0.04);
+  }
+  .dz-icon { font-size: 34px; margin-bottom: 8px; }
+  .dz-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .dz-hint { font-size: 12px; color: #3A4F6A; }
+  .dz-hint b { color: #00D4FF; }
+  input[type=file] { display: none; }
+
+  .file-queue { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .file-item {
+    display: flex; align-items: center; gap: 10px;
+    background: #0A0F1E;
+    border: 1px solid #1E2A3A;
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .fi-ext {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: rgba(0,212,255,0.1);
+    color: #00D4FF;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fi-info { flex: 1; min-width: 0; }
+  .fi-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fi-size { font-size: 11px; color: #5A7090; margin-top: 1px; }
+  .fi-remove { color: #3A4F6A; cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.15s; flex-shrink: 0; }
+  .fi-remove:hover { color: #FF4D6D; }
+
+  /* FEED */
+  .feed-section { padding: 0 20px 20px; }
+  .feed-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+    text-transform: uppercase; color: #3A4F6A;
+    padding: 16px 0 10px;
+    border-top: 1px solid #1E2A3A;
+  }
+  .feed { display: flex; flex-direction: column; gap: 8px; }
+
+  .feed-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: #0A0F1E;
+    border: 1px solid #1E2A3A;
+    border-radius: 9px;
+    padding: 11px 13px;
+    animation: fadein 0.3s ease;
+  }
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feed-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 7px; border-radius: 20px;
+    white-space: nowrap; flex-shrink: 0; margin-top: 1px;
+  }
+  .badge-text { background: rgba(0,212,255,0.12); color: #00D4FF; }
+  .badge-file { background: rgba(0,255,136,0.12); color: #00FF88; }
+  .feed-content { flex: 1; min-width: 0; }
+  .feed-text { font-size: 13px; line-height: 1.5; color: #B8CDD8; word-break: break-word; }
+  .feed-meta { font-size: 10px; color: #3A4F6A; margin-top: 3px; }
+
+  .action-btn {
+    border-radius: 6px; padding: 4px 10px; font-size: 11px; font-weight: 600;
+    cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+    transition: all 0.15s; white-space: nowrap; flex-shrink: 0; margin-top: 1px; border: 1px solid;
+  }
+  .copy-btn { background: rgba(0,212,255,0.08); color: #00D4FF; border-color: rgba(0,212,255,0.2); }
+  .copy-btn:hover { background: rgba(0,212,255,0.18); }
+  .dl-btn { background: rgba(0,255,136,0.08); color: #00FF88; border-color: rgba(0,255,136,0.2); }
+  .dl-btn:hover { background: rgba(0,255,136,0.18); }
+
+  .empty-msg { text-align: center; color: #3A4F6A; font-size: 13px; padding: 16px 0; }
+</style>
+</head>
+<body>
+
+<div class="logo"><div class="live-dot"></div>NWF</div>
+<div class="tagline">Share files & text instantly across all devices on this network</div>
+
+<div class="device-pill">
+  <div class="dp-dot"></div>
+  <span id="deviceCount">1 device connected</span>
+</div>
+
+<div class="card">
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('text',this)">📝 Text</div>
+    <div class="tab" onclick="switchTab('file',this)">📁 Files</div>
+  </div>
+
+  <div class="pane active" id="pane-text">
+    <textarea id="textInput" placeholder="Type a note, paste a link, share a password…"></textarea>
+    <button class="send-btn" onclick="sendText()">Send to All Devices</button>
+  </div>
+
+  <div class="pane" id="pane-file">
+    <div class="drop-zone" id="dropZone"
+         onclick="document.getElementById('fileInput').click()"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave()"
+         ondrop="onDrop(event)">
+      <div class="dz-icon">📂</div>
+      <div class="dz-title">Drop files here</div>
+      <div class="dz-hint">or click to browse · <b>Any file type</b></div>
+    </div>
+    <input type="file" id="fileInput" multiple onchange="onFileInput(event)">
+    <div class="file-queue" id="fileQueue"></div>
+    <button class="send-btn" id="sendFilesBtn" style="display:none" onclick="sendFiles()">Send Files to All Devices</button>
+  </div>
+
+  <div class="feed-section">
+    <div class="feed-label">Shared on this session</div>
+    <div class="feed" id="feed">
+      <div class="empty-msg" id="emptyMsg">Nothing shared yet.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Tab switch
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('pane-' + name).classList.add('active');
+  }
+
+  // File staging
+  let staged = [];
+  function onDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('over'); }
+  function onDragLeave() { document.getElementById('dropZone').classList.remove('over'); }
+  function onDrop(e) { e.preventDefault(); document.getElementById('dropZone').classList.remove('over'); [...e.dataTransfer.files].forEach(stage); }
+  function onFileInput(e) { [...e.target.files].forEach(stage); e.target.value = ''; }
+
+  function stage(file) { staged.push(file); renderQueue(); }
+  function removeStaged(i) { staged.splice(i,1); renderQueue(); }
+
+  function renderQueue() {
+    document.getElementById('sendFilesBtn').style.display = staged.length ? 'flex' : 'none';
+    document.getElementById('fileQueue').innerHTML = staged.map((f,i) => {
+      const ext = f.name.split('.').pop().toUpperCase().slice(0,4)||'FILE';
+      const sz = f.size>1e6?(f.size/1e6).toFixed(1)+' MB':f.size>1e3?(f.size/1e3).toFixed(0)+' KB':f.size+' B';
+      return `<div class="file-item">
+        <div class="fi-ext">${ext}</div>
+        <div class="fi-info"><div class="fi-name">${f.name}</div><div class="fi-size">${sz}</div></div>
+        <div class="fi-remove" onclick="removeStaged(${i})">✕</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Send text
+  function sendText() {
+    const v = document.getElementById('textInput').value.trim();
+    if (!v) { flash(document.getElementById('textInput')); return; }
+    pushFeed('text', v, null);
+    document.getElementById('textInput').value = '';
+    broadcast({ type:'text', content:v });
+  }
+
+  // Send files
+  function sendFiles() {
+    if (!staged.length) return;
+    staged.forEach(f => pushFeed('file', f.name, f));
+    staged = []; renderQueue();
+  }
+
+  // Feed
+  const fileStore = {};
+  function pushFeed(type, content, fileObj) {
+    const e = document.getElementById('emptyMsg');
+    if (e) e.remove();
+    const id = 'f'+Date.now()+Math.random().toString(36).slice(2);
+    if (fileObj) fileStore[id] = fileObj;
+    const now = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const div = document.createElement('div');
+    div.className = 'feed-item';
+    if (type === 'text') {
+      const isLink = /^https?:\/\//i.test(content);
+      const disp = isLink ? `<a href="${content}" target="_blank" style="color:#00D4FF">${esc(content)}</a>` : esc(content);
+      div.innerHTML = `<span class="feed-badge badge-text">TEXT</span>
+        <div class="feed-content"><div class="feed-text">${disp}</div><div class="feed-meta">${now}</div></div>
+        <button class="action-btn copy-btn" onclick="copyText(this,'${escA(content)}')">Copy</button>`;
+    } else {
+      const ext = content.split('.').pop().toUpperCase().slice(0,4)||'FILE';
+      div.innerHTML = `<span class="feed-badge badge-file">FILE</span>
+        <div class="feed-content"><div class="feed-text" style="font-weight:500">${esc(content)}</div><div class="feed-meta">${now}</div></div>
+        <button class="action-btn dl-btn" onclick="dlFile('${id}')">⬇ Save</button>`;
+    }
+    const feed = document.getElementById('feed');
+    feed.insertBefore(div, feed.firstChild);
+  }
+
+  function dlFile(id) {
+    const f = fileStore[id]; if (!f) return;
+    const u = URL.createObjectURL(f);
+    const a = document.createElement('a'); a.href=u; a.download=f.name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(u),1000);
+  }
+
+  function copyText(btn, text) {
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.textContent='Copied!'; btn.style.color='#00FF88';
+      setTimeout(()=>{ btn.textContent='Copy'; btn.style.color=''; },1500);
+    });
+  }
+
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escA(s){ return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+  function flash(el){ el.style.borderColor='#FF4D6D'; setTimeout(()=>el.style.borderColor='',700); }
+
+  // BroadcastChannel — syncs across tabs/windows on same origin (same device)
+  // For true cross-device LAN sharing, a backend (WebSocket server) is needed.
+  let peers = new Set();
+  try {
+    const bc = new BroadcastChannel('nwf');
+    bc.postMessage({t:'join'});
+    bc.onmessage = ({data}) => {
+      if (data.t==='join') { bc.postMessage({t:'ack'}); peers.add(data.id||'?'); updCount(); }
+      if (data.t==='ack') { peers.add(data.id||'?'); updCount(); }
+      if (data.t==='leave') { peers.delete(data.id); updCount(); }
+      if (data.t==='text') { pushFeed('text', data.content, null); }
+    };
+    window.addEventListener('beforeunload', ()=>bc.postMessage({t:'leave',id:myId}));
+    const myId = Math.random().toString(36).slice(2);
+    function broadcast(msg){ bc.postMessage({...msg, id:myId}); }
+  } catch(e){ function broadcast(){} }
+
+  function updCount(){
+    const n = peers.size + 1;
+    document.getElementById('deviceCount').textContent = n + (n===1?' device connected':' devices connected');
+  }
+</script>
+</body>
+</html>
